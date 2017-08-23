@@ -1,0 +1,33 @@
+
+object network Hybris_SAP_Remote
+subnet 100.64.5.0 255.255.255.128
+object network Hybris_SAP_Local
+ subnet 100.64.5.128 255.255.255.128
+object network Cemex_Users
+ subnet 10.0.0.0 255.0.0.0
+object network Hybrid_SAP_source_host
+ host 10.64.5.129
+
+
+access-list outside_cryptomap extended permit ip object Hybris_SAP_Local object Hybris_SAP_Remote 
+
+nat (inside,outside) source dynamic Cemex_Users Hybrid_SAP_source_host destination static Hybris_SAP_Remote Hybris_SAP_Remote
+
+crypto ipsec ikev1 transform-set ESP-AES-256-SHA esp-aes-256 esp-sha-hmac 
+
+crypto map CEMEX_MAP 4 match address outside_cryptomap
+crypto map CEMEX_MAP 4 set peer 209.202.160.253 
+crypto map CEMEX_MAP 4 set ikev1 transform-set ESP-AES-256-SHA
+crypto map CEMEX_MAP 4 set security-association lifetime seconds 86400
+crypto map CEMEX_MAP 4 set security-association lifetime kilobytes 102400000
+
+crypto ikev1 policy 55
+ authentication pre-share
+ encryption aes-256
+ hash sha
+ group 2
+ lifetime 86400
+
+tunnel-group 209.202.160.253 type ipsec-l2l
+tunnel-group 209.202.160.253 ipsec-attributes
+ ikev1 pre-shared-key C3m3XTunn3l
